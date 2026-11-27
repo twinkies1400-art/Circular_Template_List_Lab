@@ -1,0 +1,97 @@
+#ifndef LINKEDLIST_H
+#define LINKEDLIST_H
+
+#include <iostream>
+
+template <typename T>
+class LinkedList {
+private:
+    // Phase 1: Templatized nested Node struct
+    struct Node {
+        T data;
+        Node* next;
+
+        Node(T val) : data(val), next(nullptr) {}
+    };
+
+    Node* head;
+    Node* tail;        // Phase 2: Tail pointer to maintain circularity
+    Node* currentSong; // Phase 2: Tracks the currently playing node
+
+public:
+    // Constructor
+    LinkedList() : head(nullptr), tail(nullptr), currentSong(nullptr) {}
+
+    // Phase 2: Circular Insertion (appends to the end of the playlist)
+    void insert(T item) {
+        if (item == nullptr) return;
+
+        Node* newNode = new Node(item);
+
+        if (head == nullptr) {
+            // First item in the list points to itself
+            head = newNode;
+            tail = newNode;
+            newNode->next = head;
+            currentSong = head; // Initialize currentSong to the first track
+        } else {
+            // Insert after tail and wrap around to head
+            tail->next = newNode;
+            tail = newNode;
+            tail->next = head;
+        }
+    }
+
+    // Phase 2: Circular Traversal / Display
+    void displayAll() const {
+        if (head == nullptr) {
+            std::cout << "Playlist is empty.\n";
+            return;
+        }
+
+        Node* current = head;
+        // Use a do-while loop so it processes head first, then stops when back at head
+        do {
+            if (current->data != nullptr) {
+                current->data->displayInfo(); // Assumes T is a pointer to an object with displayInfo()
+            }
+            current = current->next;
+        } while (current != head);
+    }
+
+    // Phase 2: Advance currentSong and wrap around automatically
+    void playNext() {
+        if (currentSong == nullptr) {
+            std::cout << "No songs in the playlist to play.\n";
+            return;
+        }
+
+        std::cout << "Now playing: ";
+        currentSong->data->displayInfo();
+
+        // Since tail->next == head, advancing naturally wraps around
+        currentSong = currentSong->next;
+    }
+
+    // Phase 2: Circular Destructor
+    ~LinkedList() {
+        if (head == nullptr) return;
+
+        // Break the circle so we can delete cleanly like a standard list
+        tail->next = nullptr;
+
+        Node* current = head;
+        while (current != nullptr) {
+            Node* nextNode = current->next;
+            delete current->data; // Frees the Song* or Media* object
+            delete current;       // Frees the Node itself
+            current = nextNode;
+        }
+
+        head = nullptr;
+        tail = nullptr;
+        currentSong = nullptr;
+    }
+};
+
+#endif
